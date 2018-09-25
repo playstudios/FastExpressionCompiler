@@ -1,0 +1,18 @@
+<Project>
+    <PropertyGroup>
+        <!--Displays all level 3 warnings plus informational warnings. 
+        This is the default warning level at the command line.-->
+        <WarningLevel>4</WarningLevel>
+        
+        <!-- <TreatWarningsAsErrors>True</TreatWarningsAsErrors> -->
+        <CodeAnalysisRuleSet>$(SolutionDir)/codeanalysis.ruleset</CodeAnalysisRuleSet>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.3.0-beta1" /> 
+        <PackageReference Include="SonarAnalyzer.CSharp" Version="7.5.0.6605" />
+        <AdditionalFiles Include="$(SolutionDir)/stylecop.json">
+            <Link>stylecop.json</Link>
+        </AdditionalFiles>
+    </ItemGroup>
+</Project>
