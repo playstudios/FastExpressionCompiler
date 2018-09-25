@@ -46,7 +46,7 @@
     <Rule Id="CA2210" Action="None" />
     <Rule Id="CA2215" Action="Warning" />
     <Rule Id="CA2227" Action="None" />
-    <!--Error	CA1034	Do not nest type Closure. Alternatively, change its accessibility so that it is not externally visible.	FastExpressionCompiler(net45)	D:\Dev\FastExpressionCompiler\src\FastExpressionCompiler\FastExpressionCompiler.cs	676	Active-->
+    <!-- Do not nest type Closure. Alternatively, change its accessibility so that it is not externally visible.	-->
     <Rule Id="CA1034" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.ApiDesignGuidelines.Analyzers" RuleNamespace="Microsoft.ApiDesignGuidelines.Analyzers">
@@ -64,6 +64,8 @@
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1101" Action="None" />
+    <!-- The parameters must all be placed on the same line or each parameter must be placed on its own line. -->
+    <Rule Id="SA1117" Action="None" />
     <Rule Id="SA1121" Action="Warning" />
     <Rule Id="SA1122" Action="None" />
     <Rule Id="SA1124" Action="Warning" />
@@ -82,5 +84,6 @@
     <Rule Id="SA1652" Action="None" />
     <Rule Id="SX1309" Action="None" />
     <Rule Id="SX1309S" Action="None" />
+    
   </Rules>
 </RuleSet>
