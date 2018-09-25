@@ -12,7 +12,6 @@
     <Rule Id="CA1026" Action="Warning" />
     <Rule Id="CA1031" Action="Warning" />
     <Rule Id="CA1032" Action="Warning" />
-    <Rule Id="CA1034" Action="Warning" />
     <Rule Id="CA1040" Action="Warning" />
     <Rule Id="CA1051" Action="Warning" />
     <Rule Id="CA1062" Action="None" />
@@ -47,6 +46,8 @@
     <Rule Id="CA2210" Action="None" />
     <Rule Id="CA2215" Action="Warning" />
     <Rule Id="CA2227" Action="None" />
+    <!--Error	CA1034	Do not nest type Closure. Alternatively, change its accessibility so that it is not externally visible.	FastExpressionCompiler(net45)	D:\Dev\FastExpressionCompiler\src\FastExpressionCompiler\FastExpressionCompiler.cs	676	Active-->
+    <Rule Id="CA1034" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.ApiDesignGuidelines.Analyzers" RuleNamespace="Microsoft.ApiDesignGuidelines.Analyzers">
     <Rule Id="CA2007" Action="Warning" />
@@ -54,6 +55,12 @@
   <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp" RuleNamespace="Microsoft.CodeAnalysis.CSharp">
     <Rule Id="AD0001" Action="Warning" />
     <Rule Id="CS1591" Action="Error" />
+  </Rules>
+  <Rules AnalyzerId="SonarAnalyzer.CSharp" RuleNamespace="SonarAnalyzer.CSharp">
+    <!--https://rules.sonarsource.com/csharp/RSPEC-1066 Collapsible "if" statements should be merged -->
+    <Rule Id="S1066" Action="None" />
+    <!--https://rules.sonarsource.com/csharp/RSPEC-1104 Fields should not have public accessibility -->
+    <Rule Id="S1104" Action="None" />
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1101" Action="None" />
