@@ -2196,7 +2196,7 @@ namespace FastExpressionCompiler
                     var argExprs = newExpr.Arguments;
                     for (var i = 0; i < argExprs.Count; i++)
                         if (!TryEmit(argExprs[i], paramExprs, il, ref closure, parent, i))
-                    return false;
+                            return false;
                     if (!TryEmitNew(newExpr.Constructor, newExpr.Type, il, valueVar))
                         return false;
                 }

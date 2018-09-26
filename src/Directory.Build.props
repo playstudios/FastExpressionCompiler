@@ -1,18 +1,25 @@
 <Project>
     <PropertyGroup>
-        <!--Displays all level 3 warnings plus informational warnings. 
-        This is the default warning level at the command line.-->
-        <WarningLevel>4</WarningLevel>
-        
-        <!-- <TreatWarningsAsErrors>True</TreatWarningsAsErrors> -->
+        <!--The rule-set with suppressions and modification for all referenced analyzers -->
         <CodeAnalysisRuleSet>$(SolutionDir)/codeanalysis.ruleset</CodeAnalysisRuleSet>
+
+        <!--Displays all warnings plus informational warnings.-->
+        <WarningLevel>4</WarningLevel>
+
+        <!--Enable to make things fail! -->
+        <!--<TreatWarningsAsErrors>false</TreatWarningsAsErrors>-->
+
+        <!-- Copy the uncommented line below into your project PropertyGroup to ignore the code analsys for the project.-->
+        <!--<DisableCodeAnalysis>true</DisableCodeAnalysis>-->
     </PropertyGroup>
-    <ItemGroup>
+
+    <ItemGroup Condition="'$(DisableCodeAnalysis)'==''">
         <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
-        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.3.0-beta1" /> 
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.1" /> 
         <PackageReference Include="SonarAnalyzer.CSharp" Version="7.5.0.6605" />
         <AdditionalFiles Include="$(SolutionDir)/stylecop.json">
-            <Link>stylecop.json</Link>
+            <Visible>false</Visible>
         </AdditionalFiles>
     </ItemGroup>
+
 </Project>

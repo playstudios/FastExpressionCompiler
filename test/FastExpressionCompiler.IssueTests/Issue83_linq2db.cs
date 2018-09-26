@@ -1102,7 +1102,7 @@ namespace FastExpressionCompiler.UnitTests
         [Test]
         public void ConvertNullable2Test()
         {
-            var body = Convert(ConvertChecked(Constant(5l, typeof(long)), typeof(int)), typeof(int?));
+            var body = Convert(ConvertChecked(Constant(5L, typeof(long)), typeof(int)), typeof(int?));
 
             var expr = Lambda<Func<int?>>(body);
 

@@ -61,14 +61,14 @@ namespace FastExpressionCompiler.UnitTests
             var blockExpr =
                 Switch(eVar,
                     Constant(null, typeof(long?)),
-                    SwitchCase(Constant(1l, typeof(long?)), Constant(MyEnum.a)),
-                    SwitchCase(Constant(2l, typeof(long?)), Constant(MyEnum.b))
+                    SwitchCase(Constant(1L, typeof(long?)), Constant(MyEnum.a)),
+                    SwitchCase(Constant(2L, typeof(long?)), Constant(MyEnum.b))
                 );
 
             var lambda = Lambda<Func<MyEnum, long?>>(blockExpr, eVar);
             var fastCompiled = lambda.CompileFast(true);
             Assert.NotNull(fastCompiled);
-            Assert.AreEqual(2l, fastCompiled(MyEnum.b));
+            Assert.AreEqual(2L, fastCompiled(MyEnum.b));
             Assert.AreEqual(null, fastCompiled(MyEnum.c));
         }
 

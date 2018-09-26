@@ -27,7 +27,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
 
         <DefineConstants>LIGHT_EXPRESSION</DefineConstants>
-
+        <DisableCodeAnalysis>true</DisableCodeAnalysis>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Release'">

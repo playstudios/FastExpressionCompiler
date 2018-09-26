@@ -61,6 +61,8 @@
     <Rule Id="S1066" Action="None" />
     <!--https://rules.sonarsource.com/csharp/RSPEC-1104 Fields should not have public accessibility -->
     <Rule Id="S1104" Action="None" />
+    <!--https://rules.sonarsource.com/csharp/RSPEC-1135 Track uses of "TODO" tags -->
+    <Rule Id="S1135" Action="None" />
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1101" Action="None" />
