@@ -1,4 +1,7 @@
 <Project>
+    <!-- Uncomment to allow MSBuild to check further, for parent / root props, otherwise it stops on this file -->
+    <!-- <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" /> -->
+
     <PropertyGroup>
         <!--The rule-set with suppressions and modification for all referenced analyzers -->
         <CodeAnalysisRuleSet>$(SolutionDir)/codeanalysis.ruleset</CodeAnalysisRuleSet>
