@@ -30,13 +30,146 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using FastExpressionCompiler.LightExpression;
 using SysExpr = System.Linq.Expressions.Expression;
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
+namespace FastExpressionCompiler.LighterExpression
+{
+    public interface Expression
+    {
+        ExpressionType NodeType { get; }
+
+        Type Type { get; }
+
+        SysExpr ToExpression();
+    }
+
+    public static class LighterExpression
+    {
+        public static NewExpression<TArg1, TArg2> New<TArg1, TArg2>(ConstructorInfo ctor, TArg1 arg1, TArg2 arg2)
+            where TArg1 : Expression 
+            where TArg2 : Expression =>
+            new NewExpression<TArg1, TArg2>(ctor, arg1, arg2);
+
+        public static ParameterExpression Parameter(Type type, string name) => 
+            new ParameterExpression(type.IsByRef ? type.GetElementType() : type, name, type.IsByRef);
+
+        public static ConstantExpression<T> Constant<T>(T value) =>
+            new ConstantExpression<T>(value);
+
+        public static LambdaExpressionWith1Param<TBody> Lambda<TBody>(Type delegateType, TBody body, ParameterExpression parameter)
+            where TBody : Expression =>
+            new LambdaExpressionWith1Param<TBody>(delegateType, body, parameter);
+    }
+
+    public readonly struct NewExpression<TArg> : Expression
+        where TArg : Expression
+    {
+        public ExpressionType NodeType => ExpressionType.New;
+        public Type Type => Constructor.DeclaringType;
+        public SysExpr ToExpression() => SysExpr.New(Constructor, Argument.ToExpression());
+
+        public readonly ConstructorInfo Constructor;
+        public readonly TArg Argument;
+
+        internal NewExpression(ConstructorInfo constructor, TArg argument)
+        {
+            Constructor = constructor;
+            Argument = argument;
+        }
+    }
+
+    public readonly struct NewExpression<TArg1, TArg2> : Expression
+        where TArg1 : Expression
+        where TArg2 : Expression
+    {
+        public ExpressionType NodeType => ExpressionType.New;
+        public Type Type => Constructor.DeclaringType;
+        public SysExpr ToExpression() => SysExpr.New(Constructor, Argument1.ToExpression(), Argument2.ToExpression());
+
+        public readonly ConstructorInfo Constructor;
+        public readonly TArg1 Argument1;
+        public readonly TArg2 Argument2;
+
+        internal NewExpression(ConstructorInfo constructor, TArg1 argument1, TArg2 argument2)
+        {
+            Constructor = constructor;
+            Argument1 = argument1;
+            Argument2 = argument2;
+        }
+    }
+
+    public readonly struct ConstantExpression<T> : Expression
+    {
+        public ExpressionType NodeType => ExpressionType.Constant;
+        public Type Type => typeof(T);
+
+        public readonly T Value;
+
+        public SysExpr ToExpression() => SysExpr.Constant(Value, Type);
+
+        internal ConstantExpression(T value) => Value = value;
+    }
+
+    public readonly struct ParameterExpression : Expression
+    {
+        public ExpressionType NodeType => ExpressionType.Parameter;
+        public Type Type { get; }
+
+        public SysExpr ToExpression() => ToParameterExpression();
+
+        public readonly string Name;
+        public readonly bool IsByRef;
+
+        public System.Linq.Expressions.ParameterExpression ToParameterExpression() =>
+            SysExpr.Parameter(IsByRef ? Type.MakeByRefType() : Type, Name);
+
+        internal ParameterExpression(Type type, string name, bool isByRef)
+        {
+            Type = type;
+            Name = name;
+            IsByRef = isByRef;
+        }
+    }
+
+    public readonly struct LambdaExpressionWith1Param<TBody> : Expression where TBody : Expression
+    {
+        public ExpressionType NodeType => ExpressionType.Lambda;
+        public Type Type { get; }
+
+        public readonly Type ReturnType;
+        public readonly TBody Body;
+        public readonly ParameterExpression Parameter;
+
+        public SysExpr ToExpression() => ToLambdaExpression();
+
+        public System.Linq.Expressions.LambdaExpression ToLambdaExpression() =>
+            SysExpr.Lambda(Type, Body.ToExpression(), Parameter.ToParameterExpression());
+
+        internal LambdaExpressionWith1Param(Type delegateType, TBody body, ParameterExpression parameter)
+        {
+            Body = body;
+            Parameter = parameter;
+
+            if (delegateType == null || delegateType == typeof(Delegate))
+            {
+                // todo:
+                ReturnType = null;
+                Type = null;
+            }
+            else
+            {
+                ReturnType = delegateType.FindDelegateInvokeMethod().ReturnType;
+                Type = delegateType;
+            }
+        }
+    }
+}
 
 namespace FastExpressionCompiler.LightExpression
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
-    // todo: To reduce allocations we may consider to introduce IExpression and made implementations a struct.
     /// <summary>Facade for constructing Expression.</summary>
     public abstract class Expression
     {
@@ -83,9 +216,9 @@ namespace FastExpressionCompiler.LightExpression
             return new ConstantExpression(value, type);
         }
 
-        private static readonly ConstantExpression _nullExpr  = new ConstantExpression(null,  typeof(object));
+        private static readonly ConstantExpression _nullExpr = new ConstantExpression(null, typeof(object));
         private static readonly ConstantExpression _falseExpr = new ConstantExpression(false, typeof(bool));
-        private static readonly ConstantExpression _trueExpr  = new ConstantExpression(true,  typeof(bool));
+        private static readonly ConstantExpression _trueExpr = new ConstantExpression(true, typeof(bool));
 
         public static NewExpression New(Type type)
         {
@@ -98,10 +231,6 @@ namespace FastExpressionCompiler.LightExpression
 
         public static NewExpression New(ConstructorInfo ctor) =>
             new NewExpression(ctor, Tools.Empty<Expression>());
-
-        // todo: Reduce allocations
-        //public static NewExpression New(ConstructorInfo ctor, Expression argument) =>
-        //    new NewExpression<Expression>(ctor, argument);
 
         public static NewExpression New(ConstructorInfo ctor, params Expression[] arguments) =>
             new NewExpression(ctor, arguments);
@@ -146,7 +275,7 @@ namespace FastExpressionCompiler.LightExpression
             new PropertyExpression(instance, property);
 
         public static MemberExpression Property(Expression expression, string propertyName) =>
-            Property(expression, expression.Type.FindProperty(propertyName) 
+            Property(expression, expression.Type.FindProperty(propertyName)
                 ?? throw new ArgumentException($"Declared property with the name '{propertyName}' is not found in '{expression.Type}'", nameof(propertyName)));
 
         public static IndexExpression Property(Expression instance, PropertyInfo indexer, params Expression[] arguments) =>
@@ -882,7 +1011,7 @@ namespace FastExpressionCompiler.LightExpression
         internal static MethodInfo FindMethod(this Type type,
             string methodName, Type[] typeArgs, IReadOnlyList<Expression> args, bool isStatic = false)
         {
-            foreach(var m in type.GetTypeInfo().DeclaredMethods)
+            foreach (var m in type.GetTypeInfo().DeclaredMethods)
             {
                 if (isStatic == m.IsStatic && methodName == m.Name)
                 {
@@ -894,7 +1023,7 @@ namespace FastExpressionCompiler.LightExpression
                     {
                         args = args ?? Tools.Empty<Expression>();
                         var pars = m.GetParameters();
-                        if (args.Count == pars.Length && 
+                        if (args.Count == pars.Length &&
                             (args.Count == 0 || AreArgExpressionsAndParamsOfTheSameType(args, pars)))
                             return m;
                     }
@@ -1327,27 +1456,6 @@ namespace FastExpressionCompiler.LightExpression
         protected ArgumentsExpression(IReadOnlyList<Expression> arguments)
         {
             Arguments = arguments ?? Tools.Empty<Expression>();
-        }
-    }
-
-    // todo: The whole idea is to reduce allocations
-    public sealed class NewExpression<TArgs> : Expression
-    {
-        public override ExpressionType NodeType => ExpressionType.New;
-        public override Type Type => Constructor.DeclaringType;
-
-        public readonly ConstructorInfo Constructor;
-        public readonly TArgs Arguments;
-
-        public override SysExpr ToExpression() =>
-            Arguments is Expression expr
-                ? SysExpr.New(Constructor, expr.ToExpression())
-                : SysExpr.New(Constructor, ToExpressions((IReadOnlyList<Expression>)Arguments));
-
-        internal NewExpression(ConstructorInfo constructor, TArgs arguments)
-        {
-            Constructor = constructor;
-            Arguments = arguments;
         }
     }
 
