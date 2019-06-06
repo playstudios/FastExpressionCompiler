@@ -64,7 +64,7 @@ namespace FastExpressionCompiler.LighterExpression
             new LambdaExpressionWith1Param<TBody>(delegateType, body, parameter);
     }
 
-    public readonly struct NewExpression<TArg> : Expression
+    public struct NewExpression<TArg> : Expression
         where TArg : Expression
     {
         public ExpressionType NodeType => ExpressionType.New;
@@ -81,7 +81,7 @@ namespace FastExpressionCompiler.LighterExpression
         }
     }
 
-    public readonly struct NewExpression<TArg1, TArg2> : Expression
+    public struct NewExpression<TArg1, TArg2> : Expression
         where TArg1 : Expression
         where TArg2 : Expression
     {
@@ -101,7 +101,7 @@ namespace FastExpressionCompiler.LighterExpression
         }
     }
 
-    public readonly struct ConstantExpression<T> : Expression
+    public struct ConstantExpression<T> : Expression
     {
         public ExpressionType NodeType => ExpressionType.Constant;
         public Type Type => typeof(T);
@@ -113,7 +113,7 @@ namespace FastExpressionCompiler.LighterExpression
         internal ConstantExpression(T value) => Value = value;
     }
 
-    public readonly struct ParameterExpression : Expression
+    public struct ParameterExpression : Expression
     {
         public ExpressionType NodeType => ExpressionType.Parameter;
         public Type Type { get; }
@@ -134,7 +134,7 @@ namespace FastExpressionCompiler.LighterExpression
         }
     }
 
-    public readonly struct LambdaExpressionWith1Param<TBody> : Expression where TBody : Expression
+    public struct LambdaExpressionWith1Param<TBody> : Expression where TBody : Expression
     {
         public ExpressionType NodeType => ExpressionType.Lambda;
         public Type Type { get; }
