@@ -24,8 +24,6 @@ THE SOFTWARE.
 
 // ReSharper disable CoVariantArrayConversion
 
-using System.Dynamic;
-
 #if LIGHT_EXPRESSION
 namespace FastExpressionCompiler.LightExpression
 #else
@@ -576,10 +574,9 @@ namespace FastExpressionCompiler
                     return null;
 
                 var constants = Constants;
-                var nonPassedParams = NonPassedParameters;
                 var nestedLambdas = NestedLambdas;
 
-                var constPlusParamCount = constants.Count + nonPassedParams.Length;
+                var constPlusParamCount = constants.Count + NonPassedParameters.Length;
                 var totalItemCount = constPlusParamCount + nestedLambdas.Length;
 
                 var items = new object[totalItemCount];
