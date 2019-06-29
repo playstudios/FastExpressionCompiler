@@ -68,8 +68,7 @@ namespace FastExpressionCompiler.Benchmarks
                                                  CompileFast |   7.122 us | 0.0401 us | 0.0375 us |  1.58 |    0.01 |      0.4349 |      0.2136 |      0.0305 |             1.99 KB |
                             CompileFastWithPreCreatedClosure |   5.103 us | 0.0402 us | 0.0356 us |  1.13 |    0.01 |      0.3204 |      0.1602 |      0.0305 |             1.47 KB |
              CompileFastWithPreCreatedClosureLightExpression |   4.500 us | 0.0166 us | 0.0155 us |  1.00 |    0.00 |      0.3204 |      0.1602 |      0.0305 |             1.47 KB |
-
- *          */
+            */
             [Benchmark]
             public Func<B, X> Compile() => 
                 _expr.Compile();
@@ -84,13 +83,12 @@ namespace FastExpressionCompiler.Benchmarks
 
             [Benchmark]
             public Func<B, X> CompileFast_WithPreCreatedClosure() => 
-                _expr.TryCompileWithPreCreatedClosure<Func<B, X>>(_aConstExpr)
+                _expr.TryCompileWithPreCreatedClosure<Func<B, X>>(_aConstExpr) 
                 ?? _expr.Compile();
 
             [Benchmark(Baseline = true)]
             public Func<B, X> CompileFast_LightExpression_WithPreCreatedClosure() =>
-                LightExpression.ExpressionCompiler.TryCompileWithPreCreatedClosure<Func<B, X>>(
-                    _leExpr, _aConstLEExpr)
+                LightExpression.ExpressionCompiler.TryCompileWithPreCreatedClosure<Func<B, X>>(_leExpr, _aConstLEExpr)
                 ?? LightExpression.ExpressionCompiler.CompileSys(_leExpr);
         }
 
