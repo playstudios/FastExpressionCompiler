@@ -1,13 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
 using FastExpressionCompiler.LightExpression.UnitTests;
 using LE = FastExpressionCompiler.LightExpression.ExpressionCompiler;
 
 namespace FastExpressionCompiler.Benchmarks
 {
     [MemoryDiagnoser]
-    //[Orderer(SummaryOrderPolicy.FastestToSlowest)]
-    //[ClrJob, CoreJob]
     public class LightExprVsExpr_CreateAndCompile_ComplexExpr
     {
         /**
@@ -49,7 +46,6 @@ namespace FastExpressionCompiler.Benchmarks
     }
 
     [MemoryDiagnoser]
-    //[Orderer(SummaryOrderPolicy.FastestToSlowest)]
     public class LightExprVsExpr_Create_ComplexExpr
     {
         /*
