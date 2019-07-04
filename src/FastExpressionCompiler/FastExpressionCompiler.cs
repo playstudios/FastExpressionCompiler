@@ -213,7 +213,12 @@ namespace FastExpressionCompiler
                 return null;
             il.Emit(OpCodes.Ret);
 
-            var delegateType = typeof(TDelegate) != typeof(Delegate) ? typeof(TDelegate) : Tools.GetFuncOrActionType(Tools.GetParamTypes(lambdaExpr.Parameters), lambdaExpr.ReturnType);
+            Type delegateType;
+            if (typeof(TDelegate) != typeof(Delegate))
+                delegateType = typeof(TDelegate);
+            else
+                delegateType =
+                    Tools.GetFuncOrActionType(Tools.GetParamTypes(lambdaExpr.Parameters), lambdaExpr.ReturnType);
             return (TDelegate)(object)method.CreateDelegate(delegateType, ArrayClosure.Create(closureConstantsExprs));
         }
 
@@ -1737,7 +1742,7 @@ namespace FastExpressionCompiler
                     return false; // what??? no chance
 
                 var closureItemIndex = closure.Constants.Count + nonPassedParamIndex;
-                return LoadClosureFieldOrItem(ref closure, il, closureItemIndex, paramType);
+                return LoadClosureFieldOrItem(il, closureItemIndex, paramType);
             }
 
             private static void EmitDereference(ILGenerator il, Type type)
@@ -2090,7 +2095,7 @@ namespace FastExpressionCompiler
                     while (constIndex >= 0 && !ReferenceEquals(closureConstants.Items[constIndex], expr))
                         --constIndex;
 
-                    if (constIndex == -1 || !LoadClosureFieldOrItem(ref closure, il, constIndex, exprType))
+                    if (constIndex == -1 || !LoadClosureFieldOrItem(il, constIndex, exprType))
                         return false;
                 }
                 else
@@ -2266,7 +2271,7 @@ namespace FastExpressionCompiler
                 return locVar;
             }
 
-            private static bool LoadClosureFieldOrItem(ref ClosureInfo closure, ILGenerator il, int itemIndex,
+            private static bool LoadClosureFieldOrItem(ILGenerator il, int itemIndex,
                 Type itemType, Expression itemExprObj = null)
             {
                 il.Emit(OpCodes.Ldarg_0); // closure is always a first argument
@@ -2928,7 +2933,7 @@ namespace FastExpressionCompiler
                 // Load compiled lambda on stack counting the offset
                 outerNestedLambdaIndex += outerConstants.Count + outerNonPassedParams.Length;
 
-                if (!LoadClosureFieldOrItem(ref closure, il, outerNestedLambdaIndex, nestedLambda.GetType()))
+                if (!LoadClosureFieldOrItem(il, outerNestedLambdaIndex, nestedLambda.GetType()))
                     return false;
 
                 // If lambda does not use any outer parameters to be set in closure, then we're done
@@ -2959,7 +2964,7 @@ namespace FastExpressionCompiler
                         il.Emit(OpCodes.Dup);
                         EmitLoadConstantInt(il, nestedConstIndex);
 
-                        if (!LoadClosureFieldOrItem(ref closure, il, outerConstIndex, nestedConstant.Type))
+                        if (!LoadClosureFieldOrItem(il, outerConstIndex, nestedConstant.Type))
                             return false;
 
                         if (nestedConstant.Type.IsValueType())
@@ -3002,7 +3007,7 @@ namespace FastExpressionCompiler
                         {
                             var outerParamIndex = outerNonPassedParams.GetFirstIndex(nestedUsedParam);
                             if (outerParamIndex == -1 ||
-                                !LoadClosureFieldOrItem(ref closure, il, outerConstants.Count + outerParamIndex,
+                                !LoadClosureFieldOrItem(il, outerConstants.Count + outerParamIndex,
                                     nestedUsedParamType, nestedUsedParam))
                                 return false;
                         }
@@ -3039,7 +3044,7 @@ namespace FastExpressionCompiler
                         outerLambdaIndex += outerConstants.Count + outerNonPassedParams.Length;
 
                         var nestedNestedLambdaType = nestedNestedLambda.Lambda.GetType();
-                        if (!LoadClosureFieldOrItem(ref closure, il, outerLambdaIndex, nestedNestedLambdaType))
+                        if (!LoadClosureFieldOrItem(il, outerLambdaIndex, nestedNestedLambdaType))
                             return false;
 
                         il.Emit(OpCodes.Stelem_Ref); // store the item in array
