@@ -663,15 +663,18 @@ namespace FastExpressionCompiler
             public readonly object[] ConstantsAndNestedLambdas;
             public ArrayClosure(object[] constantsAndNestedLambdas) => ConstantsAndNestedLambdas = constantsAndNestedLambdas;
 
-            public static MethodInfo[] ItemMethods =
-                typeof(ArrayClosure).GetTypeInfo().DeclaredMethods.AsArray();
+        }
 
-            [MethodImpl(256)] public object Get_000() => ConstantsAndNestedLambdas[0];
-            [MethodImpl(256)] public object Get_001() => ConstantsAndNestedLambdas[1];
-            [MethodImpl(256)] public object Get_002() => ConstantsAndNestedLambdas[2];
-            [MethodImpl(256)] public object Get_003() => ConstantsAndNestedLambdas[3];
-            [MethodImpl(256)] public object Get_004() => ConstantsAndNestedLambdas[4];
-            [MethodImpl(256)] public object Get_005() => ConstantsAndNestedLambdas[5];
+        public static class ArrayClosureItems
+        {
+            public static MethodInfo[] ItemMethods =
+                typeof(ArrayClosureItems).GetTypeInfo().DeclaredMethods.AsArray();
+
+            [MethodImpl(256)] public static object Get_000(ArrayClosure a) => a.ConstantsAndNestedLambdas[0];
+            [MethodImpl(256)] public static object Get_001(ArrayClosure a) => a.ConstantsAndNestedLambdas[1];
+            [MethodImpl(256)] public static object Get_002(ArrayClosure a) => a.ConstantsAndNestedLambdas[2];
+            [MethodImpl(256)] public static object Get_003(ArrayClosure a) => a.ConstantsAndNestedLambdas[3];
+            [MethodImpl(256)] public static object Get_004(ArrayClosure a) => a.ConstantsAndNestedLambdas[4];
         }
 
         public sealed class ArrayClosureWithNonPassedParams : ArrayClosure
@@ -2174,16 +2177,16 @@ namespace FastExpressionCompiler
                     ref var closureConstants = ref closure.Constants;
                     var constItems = closureConstants.Items;
                     var constIndex = closureConstants.Count - 1;
-                    while (constIndex >= 0 && !ReferenceEquals(constItems[constIndex], expr))
+                    while (constIndex != -1 && !ReferenceEquals(constItems[constIndex], expr))
                         --constIndex;
                     if (constIndex == -1)
                         return false;
 
                     // Load constant from Closure - closure object is always a first argument
                     il.Emit(OpCodes.Ldarg_0);
-                    if (constIndex < ArrayClosure.ItemMethods.Length)
+                    if (constIndex < 5)
                     {
-                        il.Emit(OpCodes.Call, ArrayClosure.ItemMethods[constIndex]);
+                        il.Emit(OpCodes.Call, ArrayClosureItems.ItemMethods[constIndex]);
                     }
                     else
                     {
@@ -3020,7 +3023,6 @@ namespace FastExpressionCompiler
                 var constantsCount = closure.Constants.Count;
 
                 // Load compiled lambda on stack counting the offset - nested lambdas are going after constants
-                var nestedLambdaType = nestedLambda.GetType();
                 il.Emit(OpCodes.Ldarg_0); // closure is always a first argument
                 il.Emit(OpCodes.Ldfld, ArrayClosure.ConstantsAndNestedLambdasField);
                 EmitLoadConstantInt(il, constantsCount + outerNestedLambdaIndex);
