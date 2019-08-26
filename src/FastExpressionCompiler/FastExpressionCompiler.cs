@@ -670,11 +670,11 @@ namespace FastExpressionCompiler
             public static MethodInfo[] ItemMethods =
                 typeof(ArrayClosureItems).GetTypeInfo().DeclaredMethods.AsArray();
 
-            [MethodImpl(256)] public static object Get_000(ArrayClosure a) => a.ConstantsAndNestedLambdas[0];
-            [MethodImpl(256)] public static object Get_001(ArrayClosure a) => a.ConstantsAndNestedLambdas[1];
-            [MethodImpl(256)] public static object Get_002(ArrayClosure a) => a.ConstantsAndNestedLambdas[2];
-            [MethodImpl(256)] public static object Get_003(ArrayClosure a) => a.ConstantsAndNestedLambdas[3];
-            [MethodImpl(256)] public static object Get_004(ArrayClosure a) => a.ConstantsAndNestedLambdas[4];
+            [MethodImpl((MethodImplOptions)256)] public static object Get_000(ArrayClosure a) => a.ConstantsAndNestedLambdas[0];
+            [MethodImpl((MethodImplOptions)256)] public static object Get_001(ArrayClosure a) => a.ConstantsAndNestedLambdas[1];
+            [MethodImpl((MethodImplOptions)256)] public static object Get_002(ArrayClosure a) => a.ConstantsAndNestedLambdas[2];
+            [MethodImpl((MethodImplOptions)256)] public static object Get_003(ArrayClosure a) => a.ConstantsAndNestedLambdas[3];
+            [MethodImpl((MethodImplOptions)256)] public static object Get_004(ArrayClosure a) => a.ConstantsAndNestedLambdas[4];
         }
 
         public sealed class ArrayClosureWithNonPassedParams : ArrayClosure
@@ -2193,9 +2193,9 @@ namespace FastExpressionCompiler
                         il.Emit(OpCodes.Ldfld, ArrayClosure.ConstantsAndNestedLambdasField);
                         EmitLoadConstantInt(il, constIndex);
                         il.Emit(OpCodes.Ldelem_Ref);
-                        if (exprType.IsValueType())
-                            il.Emit(OpCodes.Unbox_Any, exprType);
                     }
+                    if (exprType.IsValueType())
+                        il.Emit(OpCodes.Unbox_Any, exprType);
                 }
                 else
                 {
