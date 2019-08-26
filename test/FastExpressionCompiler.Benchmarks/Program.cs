@@ -7,6 +7,9 @@ namespace FastExpressionCompiler.Benchmarks
     {
         public static void Main()
         {
+            BenchmarkRunner.Run<ClosureConstantsBenchmark.Compilation>();
+            //BenchmarkRunner.Run<ClosureConstantsBenchmark.Invocation>();
+
             //BenchmarkRunner.Run<ArrayCopy_vs_ManualForLoop>();
 
             //var a = new NestedLambdasVsVars();
@@ -46,7 +49,7 @@ namespace FastExpressionCompiler.Benchmarks
             //BenchmarkRunner.Run<HoistedLambdaBenchmark.Invocation>();
 
             //BenchmarkRunner.Run<HoistedLambdaWithNestedLambdaBenchmark.Compilation>();
-            BenchmarkRunner.Run<HoistedLambdaWithNestedLambdaBenchmark.Invocation>();
+            //BenchmarkRunner.Run<HoistedLambdaWithNestedLambdaBenchmark.Invocation>();
 
             //BenchmarkRunner.Run<HoistedLambdaBenchmark_LogicalOps.Invoke>();
             //BenchmarkRunner.Run<HoistedLambdaBenchmark_LogicalOps.Compile>();

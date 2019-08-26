@@ -35,6 +35,8 @@ THE SOFTWARE.
 #if SUPPORTS_FAST_EXPRESSION_COMPILER
 */
 
+using System.Runtime.CompilerServices;
+
 #if LIGHT_EXPRESSION
 namespace FastExpressionCompiler.LightExpression
 #else
@@ -227,7 +229,7 @@ namespace FastExpressionCompiler
             var delegateType = typeof(TDelegate) != typeof(Delegate) 
                 ? typeof(TDelegate) 
                 : Tools.GetFuncOrActionType(Tools.GetParamTypes(lambdaExpr.Parameters), lambdaExpr.ReturnType);
-            return (TDelegate)(object)method.CreateDelegate(delegateType, ArrayClosure.Create(closureConstantsExprs));
+            return (TDelegate)(object)method.CreateDelegate(delegateType, CreateClosure(closureConstantsExprs));
         }
 
         /// <summary>Tries to compile expression to "static" delegate, skipping the step of collecting the closure object.</summary>
@@ -645,21 +647,31 @@ namespace FastExpressionCompiler
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
+        public static ArrayClosure CreateClosure(ConstantExpression[] constantExprs)
+        {
+            var constants = new object[constantExprs.Length];
+            for (var i = 0; i < constants.Length; i++)
+                constants[i] = constantExprs[i].Value;
+            return new ArrayClosure(constants);
+        }
+
         public class ArrayClosure
         {
             public static FieldInfo ConstantsAndNestedLambdasField =
                 typeof(ArrayClosure).GetTypeInfo().GetDeclaredField(nameof(ConstantsAndNestedLambdas));
 
-            public static ArrayClosure Create(ConstantExpression[] constantExprs)
-            {
-                var constants = new object[constantExprs.Length];
-                for (var i = 0; i < constants.Length; i++)
-                    constants[i] = constantExprs[i].Value;
-                return new ArrayClosure(constants);
-            }
-
             public readonly object[] ConstantsAndNestedLambdas;
             public ArrayClosure(object[] constantsAndNestedLambdas) => ConstantsAndNestedLambdas = constantsAndNestedLambdas;
+
+            public static MethodInfo[] ItemMethods =
+                typeof(ArrayClosure).GetTypeInfo().DeclaredMethods.AsArray();
+
+            [MethodImpl(256)] public object Get_000() => ConstantsAndNestedLambdas[0];
+            [MethodImpl(256)] public object Get_001() => ConstantsAndNestedLambdas[1];
+            [MethodImpl(256)] public object Get_002() => ConstantsAndNestedLambdas[2];
+            [MethodImpl(256)] public object Get_003() => ConstantsAndNestedLambdas[3];
+            [MethodImpl(256)] public object Get_004() => ConstantsAndNestedLambdas[4];
+            [MethodImpl(256)] public object Get_005() => ConstantsAndNestedLambdas[5];
         }
 
         public sealed class ArrayClosureWithNonPassedParams : ArrayClosure
@@ -767,8 +779,7 @@ namespace FastExpressionCompiler
 
         /// Helps to identify constants as the one to be put in closure object 
         public static bool IsClosureBoundConstant(object value, TypeInfo type) =>
-            !type.IsPrimitive && !type.IsEnum && !(value is string) && !(value is Type) && !(value is decimal) 
-            || value is Delegate;
+            value is Delegate || !type.IsPrimitive && !type.IsEnum && !(value is string) && !(value is Type) && !(value is decimal);
 
         // @paramExprs is required for nested lambda compilation
         private static bool TryCollectBoundConstants(ref ClosureInfo closure, Expression expr,
@@ -1633,13 +1644,8 @@ namespace FastExpressionCompiler
                 if (!TryEmit(right, paramExprs, il, ref closure, parent | ParentFlags.Coalesce))
                     return false;
 
-                if (right.Type != exprObj.Type)
-                {
-                    if (right.Type.IsValueType())
-                        il.Emit(OpCodes.Box, right.Type);
-                    else
-                        il.Emit(OpCodes.Castclass, exprObj.Type);
-                }
+                if (right.Type != exprObj.Type && right.Type.IsValueType())
+                    il.Emit(OpCodes.Box, right.Type);
 
                 if (left.Type == exprObj.Type)
                     il.MarkLabel(labelFalse);
@@ -1830,7 +1836,8 @@ namespace FastExpressionCompiler
                 il.Emit(OpCodes.Ldfld, ArrayClosureWithNonPassedParams.NonPassedParamsField);
                 EmitLoadConstantInt(il, nonPassedParamIndex);
                 il.Emit(OpCodes.Ldelem_Ref);
-                il.Emit(paramType.IsValueType() ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
+                if (paramType.IsValueType())
+                    il.Emit(OpCodes.Unbox_Any, paramType);
                 return true;
             }
 
@@ -2164,23 +2171,44 @@ namespace FastExpressionCompiler
                 var constantType = constantValue.GetType();
                 if (expr != null && IsClosureBoundConstant(constantValue, constantType.GetTypeInfo()))
                 {
-                    var closureConstants = closure.Constants;
-
+                    ref var closureConstants = ref closure.Constants;
+                    var constItems = closureConstants.Items;
                     var constIndex = closureConstants.Count - 1;
-                    while (constIndex >= 0 && !ReferenceEquals(closureConstants.Items[constIndex], expr))
+                    while (constIndex >= 0 && !ReferenceEquals(constItems[constIndex], expr))
                         --constIndex;
                     if (constIndex == -1)
                         return false;
 
                     // Load constant from Closure - closure object is always a first argument
                     il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldfld, ArrayClosure.ConstantsAndNestedLambdasField);
-                    EmitLoadConstantInt(il, constIndex);
-                    il.Emit(OpCodes.Ldelem_Ref);
-                    il.Emit(exprType.IsValueType() ? OpCodes.Unbox_Any : OpCodes.Castclass, exprType);
+                    if (constIndex < ArrayClosure.ItemMethods.Length)
+                    {
+                        il.Emit(OpCodes.Call, ArrayClosure.ItemMethods[constIndex]);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldfld, ArrayClosure.ConstantsAndNestedLambdasField);
+                        EmitLoadConstantInt(il, constIndex);
+                        il.Emit(OpCodes.Ldelem_Ref);
+                        if (exprType.IsValueType())
+                            il.Emit(OpCodes.Unbox_Any, exprType);
+                    }
                 }
                 else
                 {
+                    if (constantValue is string stringValue)
+                    {
+                        il.Emit(OpCodes.Ldstr, stringValue);
+                        return true;
+                    }
+
+                    if (constantValue is Type typeValue)
+                    {
+                        il.Emit(OpCodes.Ldtoken, typeValue);
+                        il.Emit(OpCodes.Call, _getTypeFromHandleMethod);
+                        return true;
+                    }
+
                     // get raw enum type to light
                     if (constantType.GetTypeInfo().IsEnum)
                         constantType = Enum.GetUnderlyingType(constantType);
@@ -2238,17 +2266,6 @@ namespace FastExpressionCompiler
                     else if (constantType == typeof(bool))
                     {
                         il.Emit((bool)constantValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-                    }
-                    else if (constantValue is string stringValue)
-                    {
-                        il.Emit(OpCodes.Ldstr, stringValue);
-                        return true;
-                    }
-                    else if (constantValue is Type typeValue)
-                    {
-                        il.Emit(OpCodes.Ldtoken, typeValue);
-                        il.Emit(OpCodes.Call, _getTypeFromHandleMethod);
-                        return true;
                     }
                     else if (constantType == typeof(IntPtr))
                     {
@@ -3013,17 +3030,13 @@ namespace FastExpressionCompiler
                 ref var nestedClosureInfo = ref nestedLambdaInfo.ClosureInfo;
                 var nestedNonPassedParams = nestedClosureInfo.NonPassedParameters;
                 if (nestedNonPassedParams.Length == 0)
-                {
-                    il.Emit(OpCodes.Castclass, nestedLambdaType);
                     return true;
-                }
 
                 //-------------------------------------------------------------------
                 // For the lambda with non-passed parameters (or variables) in closure
                 // we have loaded `NestedLambdaWithConstantsAndNestedLambdas`,
                 // so we need to
                 // - cast to `NestedLambdaWithConstantsAndNestedLambdas` and store the object in the variable
-                il.Emit(OpCodes.Castclass, typeof(NestedLambdaWithConstantsAndNestedLambdas));
                 var pairVar = il.DeclareLocal(typeof(NestedLambdaWithConstantsAndNestedLambdas));
                 il.Emit(OpCodes.Stloc, pairVar);
 
