@@ -130,8 +130,11 @@ namespace FastExpressionCompiler.LightExpression
             return s.ToString();
         }
 
-        public static ParameterExpression Parameter(Type type, string name = null) =>
-            new ParameterExpression(type.IsByRef ? type.GetElementType() : type, name, type.IsByRef);
+        public static ParameterExpression Parameter(Type type, string name = null)
+        {
+            var isByRefType = type.IsByRef;
+            return new ParameterExpression(isByRefType ? type.GetElementType() : type, name, isByRefType);
+        }
 
         public static ParameterExpression Variable(Type type, string name = null) => Parameter(type, name);
 

@@ -485,9 +485,12 @@ namespace FastExpressionCompiler.UnitTests
 
     internal static class ArithmeticAssertExtensions
     {
-        public static void ShouldBeResultOfArithmeticOperation<T>(this T expectedResult, Func<ParameterExpression, ParameterExpression, Expression> arithmeticOperation, T param1, T param2)
+        public static void ShouldBeResultOfArithmeticOperation<T>(this T expectedResult, 
+            Func<ParameterExpression, ParameterExpression, Expression> arithmeticOperation, T param1, T param2)
         {
+#if NETCOREAPP2_2
             AssertArithmeticOperation((dynamic)expectedResult, arithmeticOperation, (dynamic)param1, (dynamic)param2);
+#endif
         }
 
         private static void AssertArithmeticOperation<T>(T expectedResult, Func<ParameterExpression, ParameterExpression, Expression> arithmeticOperation, T param1, T param2)

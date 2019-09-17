@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Reflection.Emit;
-using System.Security;
 using BenchmarkDotNet.Attributes;
-
-[assembly: AllowPartiallyTrustedCallers]
-[assembly: SecurityTransparent]
-[assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
 
 namespace FastExpressionCompiler.Benchmarks
 {

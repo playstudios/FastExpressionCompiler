@@ -8,42 +8,33 @@ namespace FastExpressionCompiler.Benchmarks
     public class GenericConverter
     {
         /*
-
-|                     Method |      Mean |     Error |    StdDev | Ratio | RatioSD |  Gen 0 |  Gen 1 |  Gen 2 | Allocated |
-|--------------------------- |----------:|----------:|----------:|------:|--------:|-------:|-------:|-------:|----------:|
-|                    Compile | 58.287 us | 0.3045 us | 0.2848 us |  8.51 |    0.06 | 0.9155 | 0.4272 |      - |    4.4 KB |
-|                CompileFast |  6.563 us | 0.0345 us | 0.0322 us |  0.96 |    0.01 | 0.4883 | 0.2441 | 0.0305 |   2.25 KB |
-| CompileFast_WithoutClosure |  6.852 us | 0.0431 us | 0.0403 us |  1.00 |    0.00 | 0.4807 | 0.2365 | 0.0381 |   2.22 KB |
-
-
-|                                         Method |      Mean |     Error |    StdDev | Ratio | RatioSD |  Gen 0 |  Gen 1 |  Gen 2 | Allocated |
-|----------------------------------------------- |----------:|----------:|----------:|------:|--------:|-------:|-------:|-------:|----------:|
-|                                        Compile | 58.354 us | 0.2345 us | 0.2079 us | 10.77 |    0.10 | 0.9155 | 0.4272 |      - |    4.4 KB |
-|                     CompileFast_WithoutClosure |  7.169 us | 0.0268 us | 0.0238 us |  1.32 |    0.01 | 0.4807 | 0.2365 | 0.0381 |   2.22 KB |
-| CompileFast_WithoutClosure_FromLightExpression |  5.418 us | 0.0416 us | 0.0369 us |  1.00 |    0.00 | 0.4272 | 0.2136 | 0.0305 |   1.97 KB |
+|                      Method |  Job | Runtime |      Mean |     Error |    StdDev | Ratio | RatioSD |  Gen 0 |  Gen 1 |  Gen 2 | Allocated |
+|---------------------------- |----- |-------- |----------:|----------:|----------:|------:|--------:|-------:|-------:|-------:|----------:|
+|                     Compile |  Clr |     Clr | 52.808 us | 0.5371 us | 0.5024 us |  9.15 |    0.09 | 0.9766 | 0.4883 |      - |   4.77 KB |
+| CompileFast_LightExpression |  Clr |     Clr |  7.692 us | 0.0255 us | 0.0238 us |  1.33 |    0.01 | 0.4272 | 0.2136 | 0.0305 |   2.03 KB |
+|                     Compile | Core |    Core | 60.547 us | 0.2227 us | 0.2083 us | 10.49 |    0.05 | 0.9155 | 0.4272 |      - |    4.4 KB |
+| CompileFast_LightExpression | Core |    Core |  5.769 us | 0.0222 us | 0.0208 us |  1.00 |    0.00 | 0.4349 | 0.2136 | 0.0305 |   2.01 KB |
 
          */
+        [ClrJob, CoreJob(baseline: true)]
         [MemoryDiagnoser]
         public class Compilation
         {
             [Benchmark]
-            public Func<int, X> Compile() => 
-                GetConverter<int, X>();
+            public Func<int, EnumX> Compile() => 
+                GetConverter<int, EnumX>();
 
-            //[Benchmark]
-            public Func<int, X> CompileFast() =>
-                GetConverter_CompiledFast<int, X>();
-
-            [Benchmark]
-            public Func<int, X> CompileFast_WithoutClosure() =>
-                GetConverter_CompiledFast_WithoutClosure<int, X>();
+            // [Benchmark]
+            public Func<int, EnumX> CompileFast() =>
+                GetConverter_CompiledFast<int, EnumX>();
 
             [Benchmark(Baseline = true)]
-            public Func<int, X> CompileFast_WithoutClosure_FromLightExpression() =>
-                GetConverter_CompiledFast_WithoutClosure_FromLightExpression<int, X>();
+            public Func<int, EnumX> CompileFast_LightExpression() =>
+                GetConverter_CompiledFast_LightExpression<int, EnumX>();
         }
 
-        [MemoryDiagnoser, IterationCount(50)]
+        [ClrJob, CoreJob(true)]
+        [MemoryDiagnoser, DisassemblyDiagnoser(printIL: true, recursiveDepth: 2)]
         public class Invocation
         {
             /*
@@ -54,21 +45,22 @@ namespace FastExpressionCompiler.Benchmarks
 | Invoke_CompileFast_WithoutClosure | 1.774 ns | 0.0026 ns | 0.0051 ns | 1.772 ns |  1.00 |     - |     - |     - |         - |
              */
 
-            private static readonly Func<int, X> _compiled     = GetConverter<int, X>();
-            private static readonly Func<int, X> _compiledFast = GetConverter_CompiledFast<int, X>();
-            private static readonly Func<int, X> _compiledFast_WithoutClosure = GetConverter_CompiledFast_WithoutClosure<int, X>();
+            private static readonly Func<int, EnumX> _compiled     = GetConverter<int, EnumX>();
+            private static readonly Func<int, EnumX> _compiledFast = GetConverter_CompiledFast<int, EnumX>();
+            private static readonly Func<int, EnumX> _compiledFast_LightExpression = GetConverter_CompiledFast_LightExpression<int, EnumX>();
+
 
             [Benchmark]
-            public X Invoke_Compiled() =>
-                _compiled(1);
+            public EnumX Invoke_CompiledFast() =>
+                _compiledFast(3);
 
-            [Benchmark]
-            public X Invoke_CompileFast() =>
-                _compiledFast(1);
+            //[Benchmark]
+            public EnumX Invoke_Compiled() => 
+                _compiled(3);
 
             [Benchmark(Baseline = true)]
-            public X Invoke_CompileFast_WithoutClosure() =>
-                _compiledFast_WithoutClosure(1);
+            public EnumX Invoke_CompiledFast_LightExpression() =>
+                _compiledFast_LightExpression(3);
         }
 
         public static Func<TFrom, TTo> GetConverter<TFrom, TTo>()
@@ -85,24 +77,13 @@ namespace FastExpressionCompiler.Benchmarks
             return expr.CompileFast(true);
         }
 
-        public static Func<TFrom, TTo> GetConverter_CompiledFast_WithoutClosure<TFrom, TTo>()
-        {
-            var fromParam = Expression.Parameter(typeof(TFrom));
-            var expr = Expression.Lambda<Func<TFrom, TTo>>(Expression.Convert(fromParam, typeof(TTo)), fromParam);
-            return expr.TryCompileWithoutClosure<Func<TFrom, TTo>>();
-        }
-
-        public static Func<TFrom, TTo> GetConverter_CompiledFast_WithoutClosure_FromLightExpression<TFrom, TTo>()
+        public static Func<TFrom, TTo> GetConverter_CompiledFast_LightExpression<TFrom, TTo>()
         {
             var fromParam = L.Parameter(typeof(TFrom));
             var expr = L.Lambda<Func<TFrom, TTo>>(L.Convert<TTo>(fromParam), fromParam);
-            return LightExpression.ExpressionCompiler.TryCompileWithoutClosure<Func<TFrom, TTo>>(expr);
+            return LightExpression.ExpressionCompiler.CompileFast(expr, true);
         }
 
-        public enum X
-        {
-            A,
-            B
-        };
+        public enum EnumX { A, B, D, E, F };
     }
 }
